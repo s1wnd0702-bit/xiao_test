@@ -4,7 +4,6 @@
 <head>
 <meta name="generator" content="jemdoc, see http://jemdoc.jaboc.net/" />
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="stylesheet" href="jemdoc.css" type="text/css" />
 <title></title>
 </head>
@@ -325,11 +324,12 @@ PipeDec: Low-Latency Pipeline-based Inference with Dynamic Speculative Decoding 
   </div>
   <div id="clustrmaps-container" class="visitor-map__canvas">
     <span class="visitor-map__loading" role="status">Loading visitor heatmap&hellip;</span>
+    <a class="visitor-map__fallback" href="https://clustrmaps.com/" title="View visitor map details">
+      <img class="visitor-map__fallback-image" src="https://clustrmaps.com/map_v2.png?cl=ffffff&amp;w=a&amp;t=tt&amp;d=Q3fjA-lT7axmrJAxLvUg0SNYMLV8WlcgoibJh57aPAM&amp;co=f4f8fc&amp;ct=334155" alt="Map of visitor locations" />
+    </a>
     <script type="text/javascript" id="clustrmaps" src="https://cdn.clustrmaps.com/map_v2.js?cl=ffffff&amp;w=a&amp;t=tt&amp;d=Q3fjA-lT7axmrJAxLvUg0SNYMLV8WlcgoibJh57aPAM&amp;co=f4f8fc&amp;cmo=f59e0b&amp;cmn=b91c1c&amp;ct=334155"></script>
     <noscript>
-      <a href="https://clustrmaps.com/" title="View visitor map details">
-        <img src="https://clustrmaps.com/map_v2.png?cl=ffffff&amp;w=a&amp;t=tt&amp;d=Q3fjA-lT7axmrJAxLvUg0SNYMLV8WlcgoibJh57aPAM&amp;co=f4f8fc&amp;ct=334155" alt="Map of visitor locations" />
-      </a>
+      <style type="text/css">.visitor-map__loading { display: none; }</style>
     </noscript>
   </div>
   <p class="visitor-map__note">Locations are approximate and are aggregated from IP geolocation; no visitor IP address is displayed publicly.</p>
@@ -337,9 +337,18 @@ PipeDec: Low-Latency Pipeline-based Inference with Dynamic Speculative Decoding 
 <script type="text/javascript">
   (function () {
     var container = document.getElementById('clustrmaps-container');
+    var fallbackImage = container.querySelector('.visitor-map__fallback-image');
 
     function mapIsVisible() {
-      return container && container.querySelector('canvas, iframe, img, object, embed, a[href*="clustrmaps"]');
+      return container && container.querySelector('canvas, iframe, object, embed, a[href*="clustrmaps"]:not(.visitor-map__fallback), img:not(.visitor-map__fallback-image), #clustrmaps-container > div');
+    }
+
+    function updateFallbackState() {
+      if (fallbackImage && fallbackImage.complete && fallbackImage.naturalWidth > 0) {
+        container.classList.add('visitor-map__canvas--static');
+        return true;
+      }
+      return false;
     }
 
     function updateMapState() {
@@ -355,6 +364,9 @@ PipeDec: Low-Latency Pipeline-based Inference with Dynamic Speculative Decoding 
       return false;
     }
 
+    fallbackImage.addEventListener('load', updateFallbackState);
+    updateFallbackState();
+
     if (!updateMapState() && window.MutationObserver) {
       var observer = new MutationObserver(function () {
         if (updateMapState()) {
@@ -363,7 +375,7 @@ PipeDec: Low-Latency Pipeline-based Inference with Dynamic Speculative Decoding 
       });
       observer.observe(container, { childList: true, subtree: true });
       window.setTimeout(function () {
-        if (!updateMapState()) {
+        if (!updateMapState() && !updateFallbackState()) {
           var message = document.createElement('p');
           message.className = 'visitor-map__error';
           message.appendChild(document.createTextNode('The visitor map is temporarily unavailable. Please disable content blocking for this page and refresh.'));
