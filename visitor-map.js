@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var MAP_DATA_URL = 'https://geo.datav.aliyun.com/areas_v3/bound/100000_full.json';
+  var MAP_DATA_URL = 'china-provinces.json';
   var GEOLOCATION_URL = 'https://ipwho.is/';
   var COUNTER_BASE_URL = 'https://countapi.mileshilliard.com/api/v1/';
   var COUNTER_PREFIX = 's1wnd0702-bit-xiao-test-visitor-';
@@ -129,6 +129,14 @@
     })).then(function () {
       return { counts: counts, failures: failures };
     });
+  }
+
+  function emptyCounts() {
+    var counts = { total: 0, overseas: 0 };
+    PROVINCES.forEach(function (province) {
+      counts[province.slug] = 0;
+    });
+    return counts;
   }
 
   function normalizeRegion(value) {
@@ -429,7 +437,12 @@
     overseasCount.textContent = String(counts.overseas || 0);
   }
 
-  var locationPromise = fetchJson(GEOLOCATION_URL, 9000);
+  var locationPromise = IS_PRODUCTION
+    ? fetchJson(GEOLOCATION_URL, 9000)
+    : Promise.resolve({ success: false });
+  var countsPromise = IS_PRODUCTION
+    ? loadCounts()
+    : Promise.resolve({ counts: emptyCounts(), failures: 0 });
   var visitPromise = locationPromise.then(recordVisit).catch(function () {
     return {
       changes: {},
@@ -440,7 +453,7 @@
 
   Promise.allSettled([
     fetchJson(MAP_DATA_URL, 12000),
-    loadCounts(),
+    countsPromise,
     visitPromise
   ]).then(function (results) {
     if (results[0].status !== 'fulfilled') {
