@@ -314,7 +314,7 @@ PipeDec: Low-Latency Pipeline-based Inference with Dynamic Speculative Decoding 
   <div class="visitor-map__heading">
     <div>
       <h2 id="visitor-map-title">Visitor Map</h2>
-      <p>Anonymous, IP-derived visitor locations. Hover over a cluster to view its location and visit count.</p>
+      <p>Anonymous, IP-derived visitor heat across China. Hover over a province to view its visit count.</p>
     </div>
     <div class="visitor-map__legend" aria-label="Heat legend">
       <span>Fewer visits</span>
@@ -322,75 +322,23 @@ PipeDec: Low-Latency Pipeline-based Inference with Dynamic Speculative Decoding 
       <span>More visits</span>
     </div>
   </div>
-  <div id="clustrmaps-container" class="visitor-map__canvas">
-    <span class="visitor-map__loading" role="status">Loading visitor heatmap&hellip;</span>
-    <a class="visitor-map__fallback" href="https://clustrmaps.com/" title="View visitor map details">
-      <img class="visitor-map__fallback-image" src="https://clustrmaps.com/map_v2.png?cl=ffffff&amp;w=a&amp;t=tt&amp;d=Q3fjA-lT7axmrJAxLvUg0SNYMLV8WlcgoibJh57aPAM&amp;co=f4f8fc&amp;ct=334155" alt="Map of visitor locations" />
-    </a>
-    <script type="text/javascript" id="clustrmaps" src="https://cdn.clustrmaps.com/map_v2.js?cl=ffffff&amp;w=a&amp;t=tt&amp;d=Q3fjA-lT7axmrJAxLvUg0SNYMLV8WlcgoibJh57aPAM&amp;co=f4f8fc&amp;cmo=f59e0b&amp;cmn=b91c1c&amp;ct=334155"></script>
-    <noscript>
-      <style type="text/css">.visitor-map__loading { display: none; }</style>
-    </noscript>
+  <div id="visitor-map-canvas" class="visitor-map__canvas" aria-label="China province visitor heatmap">
+    <svg id="visitor-map-svg" class="visitor-map__svg" viewBox="0 0 720 470" role="img" aria-labelledby="visitor-map-svg-title visitor-map-svg-desc" preserveAspectRatio="xMidYMid meet">
+      <title id="visitor-map-svg-title">China visitor heatmap</title>
+      <desc id="visitor-map-svg-desc">Chinese provinces are colored according to anonymous visit counts derived from approximate IP locations.</desc>
+    </svg>
+    <div id="visitor-map-tooltip" class="visitor-map__tooltip" role="tooltip" hidden="hidden"></div>
+    <p id="visitor-map-loading" class="visitor-map__loading" role="status">Loading province heat data&hellip;</p>
   </div>
-  <p class="visitor-map__note">Locations are approximate and are aggregated from IP geolocation; no visitor IP address is displayed publicly.</p>
+  <div class="visitor-map__summary" aria-live="polite">
+    <span>Total visits: <strong id="visitor-total-count">&ndash;</strong></span>
+    <span>Overseas: <strong id="visitor-overseas-count">&ndash;</strong></span>
+  </div>
+  <p id="visitor-map-status" class="visitor-map__note">Preparing anonymous visitor statistics&hellip;</p>
+  <p class="visitor-map__privacy">Locations are approximate and aggregated by province. This page does not store or display raw IP addresses; approximate geolocation is provided by ipwho.is.</p>
+  <noscript><p class="visitor-map__error">JavaScript is required to display the visitor heatmap.</p></noscript>
 </section>
-<script type="text/javascript">
-  (function () {
-    var container = document.getElementById('clustrmaps-container');
-    var fallbackImage = container.querySelector('.visitor-map__fallback-image');
-
-    function mapIsVisible() {
-      return container && container.querySelector('canvas, iframe, object, embed, a[href*="clustrmaps"]:not(.visitor-map__fallback), img:not(.visitor-map__fallback-image), #clustrmaps-container > div');
-    }
-
-    function updateFallbackState() {
-      if (fallbackImage && fallbackImage.complete && fallbackImage.naturalWidth > 0) {
-        container.classList.add('visitor-map__canvas--static');
-        return true;
-      }
-      return false;
-    }
-
-    function updateMapState() {
-      if (mapIsVisible()) {
-        var error = container.querySelector('.visitor-map__error');
-        container.classList.add('visitor-map__canvas--loaded');
-        container.classList.remove('visitor-map__canvas--unavailable');
-        if (error) {
-          error.parentNode.removeChild(error);
-        }
-        return true;
-      }
-      return false;
-    }
-
-    fallbackImage.addEventListener('load', updateFallbackState);
-    updateFallbackState();
-
-    if (!updateMapState() && window.MutationObserver) {
-      var observer = new MutationObserver(function () {
-        if (updateMapState()) {
-          observer.disconnect();
-        }
-      });
-      observer.observe(container, { childList: true, subtree: true });
-      window.setTimeout(function () {
-        if (!updateMapState() && !updateFallbackState()) {
-          var message = document.createElement('p');
-          message.className = 'visitor-map__error';
-          message.appendChild(document.createTextNode('The visitor map is temporarily unavailable. Please disable content blocking for this page and refresh.'));
-          container.classList.add('visitor-map__canvas--unavailable');
-          if (!container.querySelector('.visitor-map__error')) {
-            container.appendChild(message);
-          }
-        }
-      }, 12000);
-      window.setTimeout(function () {
-        observer.disconnect();
-      }, 60000);
-    }
-  }());
-</script>
+<script type="text/javascript" src="visitor-map.js" defer="defer"></script>
 </td>
 </tr>
 </table>
