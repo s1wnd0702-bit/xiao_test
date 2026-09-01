@@ -439,37 +439,31 @@ table.imgtable, table.imgtable td {
 	min-height: 340px;
 }
 
-.visitor-map__province {
+.visitor-map__country {
 	stroke: #ffffff;
-	stroke-width: 1.2;
+	stroke-width: 0.85;
 	cursor: help;
 	transition: fill 160ms ease, stroke 160ms ease, opacity 160ms ease;
 }
 
-.visitor-map__province:hover,
-.visitor-map__province:focus {
+.visitor-map__country:hover,
+.visitor-map__country:focus {
 	stroke: #183b66;
-	stroke-width: 2.2;
+	stroke-width: 1.8;
 	opacity: 0.9;
 	outline: none;
 }
 
-.visitor-map__marker {
-	fill: #7f1d1d;
-	stroke: #ffffff;
-	stroke-width: 1.5;
-	pointer-events: none;
+.visitor-map__country--current {
+	stroke: #9f1239;
+	stroke-width: 2.2;
+	filter: drop-shadow(0 0 3px rgba(159, 18, 57, 0.55));
+	animation: visitor-country-pulse 1.8s ease-in-out infinite;
 }
 
-.visitor-map__marker--current {
-	transform-box: fill-box;
-	transform-origin: center;
-	animation: visitor-marker-pulse 1.8s ease-in-out infinite;
-}
-
-@keyframes visitor-marker-pulse {
-	0%, 100% { opacity: 1; transform: scale(1); }
-	50% { opacity: 0.58; transform: scale(1.75); }
+@keyframes visitor-country-pulse {
+	0%, 100% { stroke: #9f1239; }
+	50% { stroke: #f97316; }
 }
 
 .visitor-map__loading {

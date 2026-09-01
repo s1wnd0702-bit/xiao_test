@@ -1,58 +1,24 @@
 (function () {
   'use strict';
 
-  var MAP_DATA_URL = 'china-provinces.json';
+  var MAP_DATA_URL = 'world-countries.json';
   var GEOLOCATION_URL = 'https://ipwho.is/';
   var COUNTER_BASE_URL = 'https://countapi.mileshilliard.com/api/v1/';
   var COUNTER_PREFIX = 's1wnd0702-bit-xiao-test-visitor-';
-  var SESSION_KEY = 'xiao-test-visitor-counted-v2';
+  var COUNTRY_COUNTER_PREFIX = 'country-';
+  var SESSION_KEY = 'xiao-test-visitor-counted-v3';
   var IS_PRODUCTION = /(^|\.)s1wnd0702-bit\.github\.io$/i.test(window.location.hostname);
+  var MAX_PARALLEL_REQUESTS = 14;
   var SVG_NS = 'http://www.w3.org/2000/svg';
+  var MAP_WIDTH = 960;
+  var MAP_HEIGHT = 500;
+  var MAP_PADDING_X = 8;
+  var MAP_PADDING_Y = 8;
 
-  var PROVINCES = [
-    { slug: 'beijing', name: '北京市', english: 'Beijing', aliases: ['beijing'] },
-    { slug: 'tianjin', name: '天津市', english: 'Tianjin', aliases: ['tianjin'] },
-    { slug: 'hebei', name: '河北省', english: 'Hebei', aliases: ['hebei'] },
-    { slug: 'shanxi', name: '山西省', english: 'Shanxi', aliases: ['shanxi'] },
-    { slug: 'inner-mongolia', name: '内蒙古自治区', english: 'Inner Mongolia', aliases: ['inner mongolia', 'neimenggu'] },
-    { slug: 'liaoning', name: '辽宁省', english: 'Liaoning', aliases: ['liaoning'] },
-    { slug: 'jilin', name: '吉林省', english: 'Jilin', aliases: ['jilin'] },
-    { slug: 'heilongjiang', name: '黑龙江省', english: 'Heilongjiang', aliases: ['heilongjiang'] },
-    { slug: 'shanghai', name: '上海市', english: 'Shanghai', aliases: ['shanghai'] },
-    { slug: 'jiangsu', name: '江苏省', english: 'Jiangsu', aliases: ['jiangsu'] },
-    { slug: 'zhejiang', name: '浙江省', english: 'Zhejiang', aliases: ['zhejiang'] },
-    { slug: 'anhui', name: '安徽省', english: 'Anhui', aliases: ['anhui'] },
-    { slug: 'fujian', name: '福建省', english: 'Fujian', aliases: ['fujian'] },
-    { slug: 'jiangxi', name: '江西省', english: 'Jiangxi', aliases: ['jiangxi'] },
-    { slug: 'shandong', name: '山东省', english: 'Shandong', aliases: ['shandong'] },
-    { slug: 'henan', name: '河南省', english: 'Henan', aliases: ['henan'] },
-    { slug: 'hubei', name: '湖北省', english: 'Hubei', aliases: ['hubei'] },
-    { slug: 'hunan', name: '湖南省', english: 'Hunan', aliases: ['hunan'] },
-    { slug: 'guangdong', name: '广东省', english: 'Guangdong', aliases: ['guangdong'] },
-    { slug: 'guangxi', name: '广西壮族自治区', english: 'Guangxi', aliases: ['guangxi'] },
-    { slug: 'hainan', name: '海南省', english: 'Hainan', aliases: ['hainan'] },
-    { slug: 'chongqing', name: '重庆市', english: 'Chongqing', aliases: ['chongqing'] },
-    { slug: 'sichuan', name: '四川省', english: 'Sichuan', aliases: ['sichuan'] },
-    { slug: 'guizhou', name: '贵州省', english: 'Guizhou', aliases: ['guizhou'] },
-    { slug: 'yunnan', name: '云南省', english: 'Yunnan', aliases: ['yunnan'] },
-    { slug: 'tibet', name: '西藏自治区', english: 'Tibet', aliases: ['tibet', 'xizang', 'tibet autonomous region'] },
-    { slug: 'shaanxi', name: '陕西省', english: 'Shaanxi', aliases: ['shaanxi'] },
-    { slug: 'gansu', name: '甘肃省', english: 'Gansu', aliases: ['gansu'] },
-    { slug: 'qinghai', name: '青海省', english: 'Qinghai', aliases: ['qinghai'] },
-    { slug: 'ningxia', name: '宁夏回族自治区', english: 'Ningxia', aliases: ['ningxia'] },
-    { slug: 'xinjiang', name: '新疆维吾尔自治区', english: 'Xinjiang', aliases: ['xinjiang'] },
-    { slug: 'taiwan', name: '台湾省', english: 'Taiwan', aliases: ['taiwan'] },
-    { slug: 'hong-kong', name: '香港特别行政区', english: 'Hong Kong', aliases: ['hong kong'] },
-    { slug: 'macau', name: '澳门特别行政区', english: 'Macau', aliases: ['macau', 'macao'] }
-  ];
-  var REGION_CODE_TO_SLUG = {
-    BJ: 'beijing', TJ: 'tianjin', HE: 'hebei', SX: 'shanxi', NM: 'inner-mongolia',
-    LN: 'liaoning', JL: 'jilin', HL: 'heilongjiang', SH: 'shanghai', JS: 'jiangsu',
-    ZJ: 'zhejiang', AH: 'anhui', FJ: 'fujian', JX: 'jiangxi', SD: 'shandong',
-    HA: 'henan', HB: 'hubei', HN: 'hunan', GD: 'guangdong', GX: 'guangxi',
-    HI: 'hainan', CQ: 'chongqing', SC: 'sichuan', GZ: 'guizhou', YN: 'yunnan',
-    XZ: 'tibet', SN: 'shaanxi', GS: 'gansu', QH: 'qinghai', NX: 'ningxia',
-    XJ: 'xinjiang', TW: 'taiwan', HK: 'hong-kong', MO: 'macau'
+  var COUNTRY_CODE_OVERRIDES = {
+    'Northern Cyprus': 'CY',
+    Somaliland: 'SO',
+    Kosovo: 'XK'
   };
 
   var mapCanvas = document.getElementById('visitor-map-canvas');
@@ -61,7 +27,7 @@
   var loading = document.getElementById('visitor-map-loading');
   var status = document.getElementById('visitor-map-status');
   var totalCount = document.getElementById('visitor-total-count');
-  var overseasCount = document.getElementById('visitor-overseas-count');
+  var countriesCount = document.getElementById('visitor-countries-count');
 
   if (!mapCanvas || !svg || !window.fetch) {
     return;
@@ -114,57 +80,95 @@
     });
   }
 
-  function loadCounts() {
-    var keys = PROVINCES.map(function (province) { return province.slug; }).concat(['total', 'overseas']);
+  function countryCounterKey(code) {
+    return COUNTRY_COUNTER_PREFIX + String(code || '').toLowerCase();
+  }
+
+  function mapWithConcurrency(items, limit, worker) {
+    var nextIndex = 0;
+    var workers = [];
+    var workerCount = Math.min(limit, items.length);
+
+    function runNext() {
+      var index = nextIndex;
+      nextIndex += 1;
+      if (index >= items.length) {
+        return Promise.resolve();
+      }
+      return Promise.resolve(worker(items[index], index)).then(runNext);
+    }
+
+    while (workers.length < workerCount) {
+      workers.push(runNext());
+    }
+    return Promise.all(workers);
+  }
+
+  function loadCounts(countries) {
+    var tasks = [{ countKey: 'total', counterKey: 'total' }].concat(countries.map(function (country) {
+      return { countKey: country.code, counterKey: countryCounterKey(country.code) };
+    }));
     var failures = 0;
     var counts = {};
 
-    return Promise.all(keys.map(function (key) {
-      return getCount(key).then(function (value) {
-        counts[key] = value;
+    return mapWithConcurrency(tasks, MAX_PARALLEL_REQUESTS, function (task) {
+      return getCount(task.counterKey).then(function (value) {
+        counts[task.countKey] = value;
       }).catch(function () {
         failures += 1;
-        counts[key] = 0;
+        counts[task.countKey] = 0;
       });
-    })).then(function () {
+    }).then(function () {
       return { counts: counts, failures: failures };
     });
   }
 
-  function emptyCounts() {
-    var counts = { total: 0, overseas: 0 };
-    PROVINCES.forEach(function (province) {
-      counts[province.slug] = 0;
+  function emptyCounts(countries) {
+    var counts = { total: 0 };
+    countries.forEach(function (country) {
+      counts[country.code] = 0;
     });
     return counts;
   }
 
-  function normalizeRegion(value) {
-    return String(value || '')
-      .toLowerCase()
-      .replace(/province|autonomous region|municipality|special administrative region/g, '')
-      .replace(/[^a-z]+/g, ' ')
-      .trim();
+  function isCountryCode(value) {
+    return /^[A-Z]{2}$/.test(String(value || '').toUpperCase());
   }
 
-  function findProvince(region, regionCode) {
-    var normalized = normalizeRegion(region);
-    var match = null;
+  function featureCountryName(feature) {
+    var properties = feature && feature.properties ? feature.properties : {};
+    return properties.ADMIN || properties.NAME_EN || properties.NAME || properties.name || 'Unknown country';
+  }
 
-    PROVINCES.some(function (province) {
-      if (province.aliases.some(function (alias) { return normalizeRegion(alias) === normalized; })) {
-        match = province;
-        return true;
+  function featureCountryCode(feature) {
+    var properties = feature && feature.properties ? feature.properties : {};
+    var preferred = String(properties.ISO_A2_EH || '').toUpperCase();
+    var fallback = String(properties.ISO_A2 || '').toUpperCase();
+    var name = featureCountryName(feature);
+
+    if (isCountryCode(preferred)) {
+      return preferred;
+    }
+    if (isCountryCode(fallback)) {
+      return fallback;
+    }
+    return COUNTRY_CODE_OVERRIDES[name] || '';
+  }
+
+  function collectCountries(geoJson) {
+    var byCode = {};
+
+    (geoJson.features || []).forEach(function (feature) {
+      var code = featureCountryCode(feature);
+      if (code && !byCode[code]) {
+        byCode[code] = { code: code, name: featureCountryName(feature) };
       }
-      return false;
     });
 
-    if (!match && regionCode && REGION_CODE_TO_SLUG[String(regionCode).toUpperCase()]) {
-      var slug = REGION_CODE_TO_SLUG[String(regionCode).toUpperCase()];
-      match = PROVINCES.filter(function (province) { return province.slug === slug; })[0] || null;
-    }
-
-    return match;
+    return {
+      list: Object.keys(byCode).sort().map(function (code) { return byCode[code]; }),
+      byCode: byCode
+    };
   }
 
   function wasCountedThisSession() {
@@ -183,42 +187,49 @@
     }
   }
 
-  function recordVisit(locationData) {
+  function countryFromLocation(locationData, countriesByCode) {
+    var code = String(locationData && locationData.country_code || '').toUpperCase();
+    if (!isCountryCode(code)) {
+      return null;
+    }
+    return countriesByCode[code] || {
+      code: code,
+      name: locationData.country || code
+    };
+  }
+
+  function recordVisit(locationData, countriesByCode) {
     var changes = {};
-    var isChina = locationData && locationData.success && locationData.country_code === 'CN';
-    var currentProvince = isChina ? findProvince(locationData.region, locationData.region_code) : null;
-    var countryLabel = locationData && locationData.country ? locationData.country : 'Unknown region';
+    var currentCountry = locationData && locationData.success
+      ? countryFromLocation(locationData, countriesByCode)
+      : null;
 
     if (!IS_PRODUCTION) {
       return Promise.resolve({
         changes: changes,
-        currentProvince: currentProvince,
-        message: currentProvince
-          ? 'Preview location: ' + currentProvince.english + ' / ' + currentProvince.name + '. Local previews are not counted.'
-          : 'Local preview mode. Visits are counted only on the published GitHub Pages site.'
+        currentCountry: null,
+        message: 'Local preview mode. Visits are counted only on the published GitHub Pages site.'
       });
     }
 
     if (wasCountedThisSession()) {
       return Promise.resolve({
         changes: changes,
-        currentProvince: currentProvince,
-        message: currentProvince
-          ? 'Current visit: ' + currentProvince.english + ' / ' + currentProvince.name + ' (already counted in this session).'
-          : 'Current visit: ' + countryLabel + ' (already counted in this session).'
+        currentCountry: currentCountry,
+        message: currentCountry
+          ? 'Current visit: ' + currentCountry.name + ' (already counted in this session).'
+          : 'This visit has already been counted, but its country could not be resolved.'
       });
     }
 
-    var keys = ['total'];
-    if (currentProvince) {
-      keys.push(currentProvince.slug);
-    } else if (!isChina) {
-      keys.push('overseas');
+    var tasks = [{ countKey: 'total', counterKey: 'total' }];
+    if (currentCountry) {
+      tasks.push({ countKey: currentCountry.code, counterKey: countryCounterKey(currentCountry.code) });
     }
 
-    return Promise.allSettled(keys.map(function (key) {
-      return hitCount(key).then(function (value) {
-        changes[key] = value;
+    return Promise.allSettled(tasks.map(function (task) {
+      return hitCount(task.counterKey).then(function (value) {
+        changes[task.countKey] = value;
         return value;
       });
     })).then(function (results) {
@@ -227,20 +238,12 @@
         markSessionCounted();
       }
 
-      if (currentProvince) {
-        return {
-          changes: changes,
-          currentProvince: currentProvince,
-          message: 'Current visit: ' + currentProvince.english + ' / ' + currentProvince.name + '. The province heat has been updated.'
-        };
-      }
-
       return {
         changes: changes,
-        currentProvince: null,
-        message: isChina
-          ? 'Current visit is in China, but the province could not be resolved.'
-          : 'Current visit: ' + countryLabel + '. Included in the overseas total.'
+        currentCountry: currentCountry,
+        message: currentCountry
+          ? 'Current visit: ' + currentCountry.name + '. The country heat has been updated.'
+          : 'The visit was counted, but its country could not be resolved.'
       };
     });
   }
@@ -254,20 +257,20 @@
   }
 
   function projectCoordinate(coordinate) {
-    var minLongitude = 73;
-    var maxLongitude = 135.5;
-    var minLatitude = 17.5;
-    var maxLatitude = 53.8;
-    var paddingX = 28;
-    var paddingY = 20;
-    var width = 720 - paddingX * 2;
-    var height = 470 - paddingY * 2;
-    var x = paddingX + ((coordinate[0] - minLongitude) / (maxLongitude - minLongitude)) * width;
-    var y = paddingY + ((maxLatitude - coordinate[1]) / (maxLatitude - minLatitude)) * height;
+    var longitude = Math.max(-180, Math.min(180, Number(coordinate[0]) || 0));
+    var latitude = Math.max(-90, Math.min(90, Number(coordinate[1]) || 0));
+    var width = MAP_WIDTH - MAP_PADDING_X * 2;
+    var height = MAP_HEIGHT - MAP_PADDING_Y * 2;
+    var x = MAP_PADDING_X + ((longitude + 180) / 360) * width;
+    var y = MAP_PADDING_Y + ((90 - latitude) / 180) * height;
     return [x, y];
   }
 
   function ringToPath(ring) {
+    if (!ring || !ring.length) {
+      return '';
+    }
+
     return ring.map(function (coordinate, index) {
       var point = projectCoordinate(coordinate);
       return (index === 0 ? 'M' : 'L') + point[0].toFixed(2) + ',' + point[1].toFixed(2);
@@ -302,7 +305,7 @@
 
   function heatColor(count, maximum) {
     if (!count) {
-      return '#e8f0f7';
+      return '#e5edf4';
     }
 
     var intensity = maximum > 1 ? Math.log(count + 1) / Math.log(maximum + 1) : 1;
@@ -339,8 +342,8 @@
     tooltip.style.top = top + 'px';
   }
 
-  function showTooltip(province, count, maximum, event) {
-    tooltip.textContent = province.english + ' / ' + province.name + '\nVisits: ' + count + '\n' + heatLabel(count, maximum);
+  function showTooltip(country, count, maximum, event) {
+    tooltip.textContent = country.name + '\nVisits: ' + count + '\n' + heatLabel(count, maximum);
     tooltip.hidden = false;
 
     if (event && typeof event.clientX === 'number') {
@@ -355,16 +358,12 @@
     tooltip.hidden = true;
   }
 
-  function renderMap(geoJson, counts, currentProvince) {
+  function renderMap(geoJson, counts, currentCountry, countries) {
     var title = svg.querySelector('title');
     var description = svg.querySelector('desc');
-    var provinceByName = {};
-    var maximum = Math.max.apply(Math, PROVINCES.map(function (province) { return counts[province.slug] || 0; }).concat([1]));
-    var markerLayer = createSvgElement('g', { 'class': 'visitor-map__markers', 'aria-hidden': 'true' });
-
-    PROVINCES.forEach(function (province) {
-      provinceByName[province.name] = province;
-    });
+    var maximum = Math.max.apply(Math, countries.map(function (country) {
+      return counts[country.code] || 0;
+    }).concat([1]));
 
     while (svg.firstChild) {
       svg.removeChild(svg.firstChild);
@@ -377,48 +376,38 @@
     }
 
     geoJson.features.forEach(function (feature) {
-      var province = provinceByName[feature.properties && feature.properties.name];
+      var code = featureCountryCode(feature);
       var pathData = geometryToPath(feature.geometry);
-      if (!province || !pathData) {
+      if (!code || !pathData) {
         return;
       }
 
-      var count = counts[province.slug] || 0;
+      var country = { code: code, name: featureCountryName(feature) };
+      var count = counts[code] || 0;
+      var isCurrent = currentCountry && currentCountry.code === code;
       var path = createSvgElement('path', {
         d: pathData,
-        'class': 'visitor-map__province',
+        'class': 'visitor-map__country' + (isCurrent ? ' visitor-map__country--current' : ''),
         fill: heatColor(count, maximum),
-        'data-province': province.slug,
+        'data-country': code.toLowerCase(),
         tabindex: '0',
         role: 'button',
-        'aria-label': province.english + ', ' + count + ' visits',
+        'aria-label': country.name + ', ' + count + ' visits',
         'fill-rule': 'evenodd',
         'vector-effect': 'non-scaling-stroke'
       });
       var nativeTitle = createSvgElement('title');
-      nativeTitle.textContent = province.english + ' / ' + province.name + ': ' + count + ' visits';
+      nativeTitle.textContent = country.name + ': ' + count + ' visits';
       path.appendChild(nativeTitle);
 
-      path.addEventListener('pointerenter', function (event) { showTooltip(province, count, maximum, event); });
+      path.addEventListener('pointerenter', function (event) { showTooltip(country, count, maximum, event); });
       path.addEventListener('pointermove', function (event) { positionTooltip(event.clientX, event.clientY); });
       path.addEventListener('pointerleave', hideTooltip);
-      path.addEventListener('focus', function (event) { showTooltip(province, count, maximum, event); });
+      path.addEventListener('focus', function (event) { showTooltip(country, count, maximum, event); });
       path.addEventListener('blur', hideTooltip);
       svg.appendChild(path);
-
-      if (count > 0 && feature.properties && (feature.properties.centroid || feature.properties.center)) {
-        var center = projectCoordinate(feature.properties.centroid || feature.properties.center);
-        var marker = createSvgElement('circle', {
-          cx: center[0].toFixed(2),
-          cy: center[1].toFixed(2),
-          r: String(Math.min(9, 3.5 + Math.log(count + 1) * 1.5)),
-          'class': 'visitor-map__marker' + (currentProvince && currentProvince.slug === province.slug ? ' visitor-map__marker--current' : '')
-        });
-        markerLayer.appendChild(marker);
-      }
     });
 
-    svg.appendChild(markerLayer);
     mapCanvas.classList.add('visitor-map__canvas--loaded');
     loading.hidden = true;
   }
@@ -432,56 +421,67 @@
     mapCanvas.appendChild(error);
   }
 
-  function updateSummary(counts) {
+  function updateSummary(counts, countries) {
+    var reached = countries.filter(function (country) {
+      return (counts[country.code] || 0) > 0;
+    }).length;
     totalCount.textContent = String(counts.total || 0);
-    overseasCount.textContent = String(counts.overseas || 0);
+    countriesCount.textContent = String(reached);
   }
 
-  var locationPromise = IS_PRODUCTION
-    ? fetchJson(GEOLOCATION_URL, 9000)
-    : Promise.resolve({ success: false });
-  var countsPromise = IS_PRODUCTION
-    ? loadCounts()
-    : Promise.resolve({ counts: emptyCounts(), failures: 0 });
-  var visitPromise = locationPromise.then(recordVisit).catch(function () {
-    return {
-      changes: {},
-      currentProvince: null,
-      message: 'The map loaded, but the current visit could not be assigned to a province.'
-    };
-  });
-
-  Promise.allSettled([
-    fetchJson(MAP_DATA_URL, 12000),
-    countsPromise,
-    visitPromise
-  ]).then(function (results) {
-    if (results[0].status !== 'fulfilled') {
-      renderError('Province map data is temporarily unavailable. Please refresh later.');
-      status.textContent = 'Visitor counting is available, but the map outline could not be loaded.';
-      status.classList.add('visitor-map__note--error');
-      return;
+  fetchJson(MAP_DATA_URL, 12000).then(function (geoJson) {
+    if (!geoJson || !Array.isArray(geoJson.features) || !geoJson.features.length) {
+      throw new Error('The world map data is invalid.');
     }
 
-    var countResult = results[1].status === 'fulfilled' ? results[1].value : { counts: {}, failures: PROVINCES.length + 2 };
-    var visitResult = results[2].status === 'fulfilled' ? results[2].value : { changes: {}, currentProvince: null, message: 'Visitor location is temporarily unavailable.' };
-    var counts = countResult.counts;
+    var countries = collectCountries(geoJson);
+    var initialCounts = emptyCounts(countries.list);
+    renderMap(geoJson, initialCounts, null, countries.list);
+    status.textContent = IS_PRODUCTION
+      ? 'Loading anonymous country visit counts…'
+      : 'Local preview mode. Visits are counted only on the published GitHub Pages site.';
 
-    Object.keys(visitResult.changes).forEach(function (key) {
-      counts[key] = visitResult.changes[key];
+    var locationPromise = IS_PRODUCTION
+      ? fetchJson(GEOLOCATION_URL, 9000)
+      : Promise.resolve({ success: false });
+    var countsPromise = IS_PRODUCTION
+      ? loadCounts(countries.list)
+      : Promise.resolve({ counts: initialCounts, failures: 0 });
+    var visitPromise = locationPromise.then(function (locationData) {
+      return recordVisit(locationData, countries.byCode);
+    }).catch(function () {
+      return {
+        changes: {},
+        currentCountry: null,
+        message: 'The map loaded, but the current visit could not be assigned to a country.'
+      };
     });
 
-    renderMap(results[0].value, counts, visitResult.currentProvince);
-    updateSummary(counts);
-    status.textContent = visitResult.message;
+    return Promise.allSettled([countsPromise, visitPromise]).then(function (results) {
+      var countResult = results[0].status === 'fulfilled'
+        ? results[0].value
+        : { counts: initialCounts, failures: countries.list.length + 1 };
+      var visitResult = results[1].status === 'fulfilled'
+        ? results[1].value
+        : { changes: {}, currentCountry: null, message: 'Visitor location is temporarily unavailable.' };
+      var counts = countResult.counts;
 
-    if (countResult.failures > 0) {
-      status.textContent += ' Some historical counters could not be read.';
-      status.classList.add('visitor-map__note--error');
-    }
+      Object.keys(visitResult.changes).forEach(function (key) {
+        counts[key] = visitResult.changes[key];
+      });
+
+      renderMap(geoJson, counts, visitResult.currentCountry, countries.list);
+      updateSummary(counts, countries.list);
+      status.textContent = visitResult.message;
+
+      if (countResult.failures > 0) {
+        status.textContent += ' Some historical country counters could not be read.';
+        status.classList.add('visitor-map__note--error');
+      }
+    });
   }).catch(function () {
-    renderError('The visitor heatmap is temporarily unavailable. Please refresh later.');
-    status.textContent = 'No visitor IP address has been stored by this page.';
+    renderError('World map data is temporarily unavailable. Please refresh later.');
+    status.textContent = 'Visitor counting is available, but the world map outline could not be loaded.';
     status.classList.add('visitor-map__note--error');
   });
 }());

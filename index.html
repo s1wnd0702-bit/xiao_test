@@ -314,7 +314,7 @@ PipeDec: Low-Latency Pipeline-based Inference with Dynamic Speculative Decoding 
   <div class="visitor-map__heading">
     <div>
       <h2 id="visitor-map-title">Visitor Map</h2>
-      <p>Anonymous, IP-derived visitor heat across China. Hover over a province to view its visit count.</p>
+      <p>Anonymous, IP-derived visitor heat across the world. Hover over a country to view its visit count.</p>
     </div>
     <div class="visitor-map__legend" aria-label="Heat legend">
       <span>Fewer visits</span>
@@ -322,20 +322,20 @@ PipeDec: Low-Latency Pipeline-based Inference with Dynamic Speculative Decoding 
       <span>More visits</span>
     </div>
   </div>
-  <div id="visitor-map-canvas" class="visitor-map__canvas" aria-label="China province visitor heatmap">
-    <svg id="visitor-map-svg" class="visitor-map__svg" viewBox="0 0 720 470" role="img" aria-labelledby="visitor-map-svg-title visitor-map-svg-desc" preserveAspectRatio="xMidYMid meet">
-      <title id="visitor-map-svg-title">China visitor heatmap</title>
-      <desc id="visitor-map-svg-desc">Chinese provinces are colored according to anonymous visit counts derived from approximate IP locations.</desc>
+  <div id="visitor-map-canvas" class="visitor-map__canvas" aria-label="Global country visitor heatmap">
+    <svg id="visitor-map-svg" class="visitor-map__svg" viewBox="0 0 960 500" role="img" aria-labelledby="visitor-map-svg-title visitor-map-svg-desc" preserveAspectRatio="xMidYMid meet">
+      <title id="visitor-map-svg-title">Global visitor heatmap</title>
+      <desc id="visitor-map-svg-desc">Countries are colored according to anonymous visit counts derived from approximate IP locations.</desc>
     </svg>
     <div id="visitor-map-tooltip" class="visitor-map__tooltip" role="tooltip" hidden="hidden"></div>
-    <p id="visitor-map-loading" class="visitor-map__loading" role="status">Loading province heat data&hellip;</p>
+    <p id="visitor-map-loading" class="visitor-map__loading" role="status">Loading country heat data&hellip;</p>
   </div>
   <div class="visitor-map__summary" aria-live="polite">
     <span>Total visits: <strong id="visitor-total-count">&ndash;</strong></span>
-    <span>Overseas: <strong id="visitor-overseas-count">&ndash;</strong></span>
+    <span>Countries reached: <strong id="visitor-countries-count">&ndash;</strong></span>
   </div>
   <p id="visitor-map-status" class="visitor-map__note">Preparing anonymous visitor statistics&hellip;</p>
-  <p class="visitor-map__privacy">Locations are approximate and aggregated by province. This page does not store or display raw IP addresses; approximate geolocation is provided by ipwho.is.</p>
+  <p class="visitor-map__privacy">Locations are approximate and aggregated by country. This page does not store or display raw IP addresses; approximate geolocation is provided by ipwho.is.</p>
   <noscript><p class="visitor-map__error">JavaScript is required to display the visitor heatmap.</p></noscript>
 </section>
 <script type="text/javascript" src="visitor-map.js" defer="defer"></script>
